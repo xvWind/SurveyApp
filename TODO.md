@@ -219,6 +219,7 @@ This roadmap breaks the implementation into small, testable phases ordered from 
 # Phase 15 — Deployment
 
 - [x] Configure Git repository and frequent checkpoint commits.
+- [x] Push the project to GitHub (https://github.com/xvWind/SurveyApp.git).
 - [x] Configure Cloudflare Pages SPA redirects (`public/_redirects`).
 - [x] Configure environment variables (`.env.example`).
 - [x] Test production build bundle (`dist/`).
