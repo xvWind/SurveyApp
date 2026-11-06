@@ -179,14 +179,16 @@ export const PresentSurveyPage: React.FC = () => {
         </Link>
 
         <div className="flex items-center gap-2.5 flex-wrap">
-          <button
-            onClick={() => setShowNetworkSettings(!showNetworkSettings)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition border border-slate-700"
-            title="Configure QR Host URL"
-          >
-            <Settings2 className="w-3.5 h-3.5" />
-            <span>Host URL</span>
-          </button>
+          {isLocalhost && (
+            <button
+              onClick={() => setShowNetworkSettings(!showNetworkSettings)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition border border-slate-700"
+              title="Configure QR Host URL (Local Development Only)"
+            >
+              <Settings2 className="w-3.5 h-3.5" />
+              <span>Host URL</span>
+            </button>
+          )}
 
           <button
             onClick={handleDownloadQr}
