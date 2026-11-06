@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { CheckSquare, LogOut, PlusCircle } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
-  const { user, signOut, isDemoMode, isGuestInstructor } = useAuth();
+  const { user, signOut, isDemoMode } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -31,14 +31,13 @@ export const Navbar: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {isGuestInstructor && !isDemoMode && (
-              <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                Test Evaluator Mode
+            {!isDemoMode ? (
+              <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200" title="Connected to PostgreSQL via Supabase">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Supabase Connected
               </span>
-            )}
-            {isDemoMode && (
-              <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+            ) : (
+              <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200" title="Running in standalone mode with browser localStorage">
                 <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                 Local Mock Store
               </span>

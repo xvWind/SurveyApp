@@ -22,7 +22,7 @@ export const LoginPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [testSubmitting, setTestSubmitting] = useState(false);
 
-  const { signIn, signUp, signInAsTestInstructor } = useAuth();
+  const { signIn, signUp, signInAsTestInstructor, isDemoMode } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -97,6 +97,19 @@ export const LoginPage: React.FC = () => {
         <p className="mt-1 text-sm text-slate-500">
           Prepare surveys, present in class, and review understanding checks
         </p>
+        <div className="mt-3 flex justify-center">
+          {isDemoMode ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              Local Mock Database
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              Supabase Connected
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">

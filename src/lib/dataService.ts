@@ -40,6 +40,7 @@ export function getOrCreateStudentToken(): string {
 
 // Initial mock data
 function initializeMockData() {
+  if (isSupabaseConfigured) return;
   if (localStorage.getItem(STORAGE_KEYS.SURVEYS)) return;
 
   const mockSurveys: Survey[] = [
@@ -166,21 +167,14 @@ export const DataService = {
   // 1. List all surveys
   async listSurveys(): Promise<Survey[]> {
     if (isSupabaseConfigured && supabase) {
-      try {
-        const { data, error } = await supabase
-          .from('surveys')
-          .select('*')
-          .order('created_at', { ascending: false });
-        if (!error && data) {
-          const localSurveys = getStored<Survey>(STORAGE_KEYS.SURVEYS);
-          const existingIds = new Set(data.map((s) => s.id));
-          const uniqueLocal = localSurveys.filter((s) => !existingIds.has(s.id));
-          return [...data, ...uniqueLocal].sort(
-            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          );
-        }
-      } catch (err) {
-        console.warn('Supabase listSurveys error, using fallback:', err);
+      const { data, error } = await supabase
+        .from('surveys')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) {
+        console.warn('Supabase listSurveys query error:', error);
+      } else {
+        return data || [];
       }
     }
     return getStored<Survey>(STORAGE_KEYS.SURVEYS).sort(
