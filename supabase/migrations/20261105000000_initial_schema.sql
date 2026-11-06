@@ -3,12 +3,6 @@
 
 create extension if not exists "pgcrypto";
 
-drop trigger if exists surveys_updated_at on surveys;
-drop function if exists update_updated_at_column();
-drop function if exists activate_survey(uuid);
-drop function if exists close_survey(uuid);
-drop function if exists submit_survey_response(uuid, text, jsonb);
-
 create table if not exists surveys (
     id uuid primary key default gen_random_uuid(),
     created_by uuid references auth.users(id) on delete set null,
@@ -36,6 +30,7 @@ begin
 end;
 $$ language plpgsql;
 
+drop trigger if exists surveys_updated_at on surveys;
 create trigger surveys_updated_at
 before update on surveys
 for each row
