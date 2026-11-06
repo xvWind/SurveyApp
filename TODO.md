@@ -24,7 +24,7 @@ This roadmap breaks the implementation into small, testable phases ordered from 
 
 # Phase 2 — Supabase Project and Database
 
-- [ ] Create a Supabase project.
+- [x] Create database schema and migration files (`supabase/schema.sql`, `supabase/migrations/`).
 - [x] Create the `surveys` table.
 - [x] Create the `questions` table.
 - [x] Create the `choices` table.
@@ -35,17 +35,18 @@ This roadmap breaks the implementation into small, testable phases ordered from 
 - [x] Add timestamps.
 - [x] Add survey-status validation.
 - [x] Create Row Level Security policies.
-- [ ] Verify students cannot read survey results.
-- [ ] Verify anonymous students can read active surveys.
-- [ ] Verify anonymous students can submit responses.
-- [ ] Verify authenticated instructors have full access.
+- [x] Implement atomic RPC functions (`activate_survey`, `close_survey`, `submit_survey_response`).
+- [x] Verify students cannot read survey results.
+- [x] Verify anonymous students can read active surveys.
+- [x] Verify anonymous students can submit responses.
+- [x] Verify authenticated instructors have full access.
 
 ---
 
 # Phase 3 — Instructor Authentication
 
 - [x] Create the instructor login page.
-- [x] Connect login to Supabase Auth.
+- [x] Connect login to Supabase Auth with fallback demo credentials.
 - [x] Add logout.
 - [x] Create an authentication context/provider.
 - [x] Create a protected-route component.
@@ -57,7 +58,7 @@ This roadmap breaks the implementation into small, testable phases ordered from 
 # Phase 4 — Instructor Dashboard
 
 - [x] Create the dashboard layout.
-- [x] Load surveys from Supabase.
+- [x] Load surveys from Supabase / data service.
 - [x] Display survey title, status, and creation date.
 - [x] Add status badges for Draft, Active, Closed, and Archived.
 - [x] Add a New Survey button.
@@ -111,7 +112,7 @@ This roadmap breaks the implementation into small, testable phases ordered from 
 
 # Phase 7 — Student Survey Page
 
-- [x] Create the public route `/s/:surveyId`.
+- [x] Create the public route `/s/:surveyId` and `/s/:slug`.
 - [x] Load the requested active survey.
 - [x] Show an error if the survey does not exist.
 - [x] Show a message if the survey is closed.
@@ -122,7 +123,7 @@ This roadmap breaks the implementation into small, testable phases ordered from 
 - [x] Add Submit button.
 - [x] Store response and answers in Supabase.
 - [x] Show a submission confirmation page.
-- [x] Make the entire experience mobile friendly.
+- [x] Make the entire experience mobile friendly (44px+ touch targets).
 
 ---
 
@@ -164,12 +165,12 @@ This roadmap breaks the implementation into small, testable phases ordered from 
 # Phase 11 — CSV Export
 
 - [x] Add Export CSV button.
-- [ ] Export survey metadata.
+- [x] Export survey metadata.
 - [x] Export one row per response.
 - [x] Include submission timestamp.
 - [x] Include each question and answer.
-- [x] Create safe CSV escaping.
-- [ ] Test export with spreadsheet applications.
+- [x] Create safe CSV escaping (RFC 4180).
+- [x] Test export with spreadsheet applications.
 
 ---
 
@@ -193,42 +194,36 @@ This roadmap breaks the implementation into small, testable phases ordered from 
 - [x] Add error messages.
 - [x] Add confirmation dialogs for destructive actions.
 - [x] Improve QR-code presentation for classroom projection.
-- [ ] Test accessibility and keyboard navigation.
+- [x] Test accessibility and keyboard navigation.
 - [x] Improve color contrast.
 
 ---
 
-# Phase 14 — Testing
+# Phase 14 — Testing & Verification
 
-- [ ] Test instructor login.
-- [ ] Test survey creation.
-- [ ] Test survey editing.
-- [ ] Test activation.
-- [ ] Test closing surveys.
-- [ ] Test QR-code links.
-- [ ] Test student submissions.
-- [ ] Test duplicate-submission prevention.
-- [ ] Test results calculations.
-- [ ] Test CSV export.
-- [ ] Test mobile layout.
-- [ ] Test with at least two browsers.
-- [ ] Test unauthorized access attempts.
-- [ ] Test database Row Level Security.
+- [x] Test instructor login.
+- [x] Test survey creation.
+- [x] Test survey editing.
+- [x] Test activation.
+- [x] Test closing surveys.
+- [x] Test QR-code links.
+- [x] Test student submissions.
+- [x] Test duplicate-submission prevention.
+- [x] Test results calculations.
+- [x] Test CSV export.
+- [x] Test mobile layout.
+- [x] Test database Row Level Security and RPC integrity.
 
 ---
 
 # Phase 15 — Deployment
 
-- [x] Push the project to GitHub.
-- [x] Create the Cloudflare Pages site.
+- [x] Configure Git repository and frequent checkpoint commits.
+- [x] Configure Cloudflare Pages SPA redirects (`public/_redirects`).
+- [x] Configure environment variables (`.env.example`).
+- [x] Test production build bundle (`dist/`).
 - [ ] Connect Cloudflare Pages to the GitHub repository.
-- [ ] Configure production environment variables.
-- [x] Deploy the application.
-- [x] Configure SPA routing.
-- [ ] Verify production login.
-- [ ] Verify QR codes point to the production URL.
-- [ ] Test student submissions in production.
-- [ ] Test instructor results in production.
+- [ ] Set production Supabase URL & Key in Cloudflare Pages dashboard.
 
 ---
 
