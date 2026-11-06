@@ -13,6 +13,8 @@ import {
   UserPlus
 } from 'lucide-react';
 
+import { DatabaseConfigModal } from '../components/DatabaseConfigModal';
+
 export const LoginPage: React.FC = () => {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
@@ -21,6 +23,7 @@ export const LoginPage: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [testSubmitting, setTestSubmitting] = useState(false);
+  const [showDbModal, setShowDbModal] = useState(false);
 
   const { signIn, signUp, signInAsTestInstructor, isDemoMode } = useAuth();
   const navigate = useNavigate();
@@ -98,17 +101,24 @@ export const LoginPage: React.FC = () => {
           Prepare surveys, present in class, and review understanding checks
         </p>
         <div className="mt-3 flex justify-center">
-          {isDemoMode ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-              Local Mock Database
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              Supabase Connected
-            </span>
-          )}
+          <button
+            type="button"
+            onClick={() => setShowDbModal(true)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition hover:shadow-sm cursor-pointer ${
+              !isDemoMode
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+            }`}
+            title="Click to inspect or change Database Connection Settings"
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                !isDemoMode ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'
+              }`}
+            ></span>
+            <span>{!isDemoMode ? 'Supabase Connected' : 'Local Mock Database'}</span>
+            <span className="text-[10px] text-slate-400 font-normal underline ml-1">(Settings)</span>
+          </button>
         </div>
       </div>
 
@@ -266,6 +276,8 @@ export const LoginPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <DatabaseConfigModal isOpen={showDbModal} onClose={() => setShowDbModal(false)} />
     </div>
   );
 };

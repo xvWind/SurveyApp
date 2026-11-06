@@ -163,6 +163,11 @@ function setStored<T>(key: string, data: T[]) {
   localStorage.setItem(key, JSON.stringify(data));
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function isUuid(val: string | null | undefined): boolean {
+  return Boolean(val && UUID_REGEX.test(val));
+}
+
 export const DataService = {
   // 1. List all surveys
   async listSurveys(): Promise<Survey[]> {
@@ -182,52 +187,55 @@ export const DataService = {
     );
   },
 
-  // 2. Get survey by ID with questions and choices
+  // 2. Get survey by ID or Slug with questions and choices
   async getSurveyById(id: string): Promise<SurveyWithQuestions | null> {
     if (isSupabaseConfigured && supabase) {
-      const { data: survey, error: surveyError } = await supabase
-        .from('surveys')
-        .select('*')
-        .eq('id', id)
-        .single();
-      if (surveyError || !survey) return null;
-
-      const { data: questions, error: qError } = await supabase
-        .from('questions')
-        .select('*')
-        .eq('survey_id', id)
-        .order('position', { ascending: true });
-      if (qError) throw qError;
-
-      const questionIds = (questions || []).map((q) => q.id);
-      let choices: Choice[] = [];
-      if (questionIds.length > 0) {
-        const { data: cData, error: cError } = await supabase
-          .from('choices')
-          .select('*')
-          .in('question_id', questionIds)
-          .order('position', { ascending: true });
-        if (cError) throw cError;
-        choices = cData || [];
+      let query = supabase.from('surveys').select('*');
+      if (isUuid(id)) {
+        query = query.eq('id', id);
+      } else {
+        query = query.eq('public_slug', id);
       }
 
-      const questionsWithChoices = (questions || []).map((q) => ({
-        ...q,
-        choices: choices.filter((c) => c.question_id === q.id)
-      }));
+      const { data: survey, error: surveyError } = await query.maybeSingle();
+      if (!surveyError && survey) {
+        const { data: questions, error: qError } = await supabase
+          .from('questions')
+          .select('*')
+          .eq('survey_id', survey.id)
+          .order('position', { ascending: true });
+        if (qError) throw qError;
 
-      return {
-        ...survey,
-        questions: questionsWithChoices
-      };
+        const questionIds = (questions || []).map((q) => q.id);
+        let choices: Choice[] = [];
+        if (questionIds.length > 0) {
+          const { data: cData, error: cError } = await supabase
+            .from('choices')
+            .select('*')
+            .in('question_id', questionIds)
+            .order('position', { ascending: true });
+          if (cError) throw cError;
+          choices = cData || [];
+        }
+
+        const questionsWithChoices = (questions || []).map((q) => ({
+          ...q,
+          choices: choices.filter((c) => c.question_id === q.id)
+        }));
+
+        return {
+          ...survey,
+          questions: questionsWithChoices
+        };
+      }
     }
 
     const surveys = getStored<Survey>(STORAGE_KEYS.SURVEYS);
-    const survey = surveys.find((s) => s.id === id);
+    const survey = surveys.find((s) => s.id === id || s.public_slug === id);
     if (!survey) return null;
 
     const questions = getStored<Question>(STORAGE_KEYS.QUESTIONS)
-      .filter((q) => q.survey_id === id)
+      .filter((q) => q.survey_id === survey.id)
       .sort((a, b) => a.position - b.position);
 
     const allChoices = getStored<Choice>(STORAGE_KEYS.CHOICES);
@@ -247,16 +255,17 @@ export const DataService = {
   // 3. Resolve public survey by slug or ID
   async getPublicSurvey(identifier: string): Promise<SurveyWithQuestions | null> {
     if (isSupabaseConfigured && supabase) {
-      // Find active survey by slug or id
-      const { data: surveys, error } = await supabase
-        .from('surveys')
-        .select('*')
-        .or(`public_slug.eq.${identifier},id.eq.${identifier}`)
-        .eq('status', 'active')
-        .limit(1);
+      let query = supabase.from('surveys').select('*').eq('status', 'active');
+      if (isUuid(identifier)) {
+        query = query.or(`public_slug.eq.${identifier},id.eq.${identifier}`);
+      } else {
+        query = query.eq('public_slug', identifier);
+      }
+      const { data: surveys, error } = await query.limit(1);
 
-      if (error || !surveys || surveys.length === 0) return null;
-      return this.getSurveyById(surveys[0].id);
+      if (!error && surveys && surveys.length > 0) {
+        return this.getSurveyById(surveys[0].id);
+      }
     }
 
     const surveys = getStored<Survey>(STORAGE_KEYS.SURVEYS);
@@ -541,14 +550,20 @@ export const DataService = {
   // 10. Check if student already submitted to survey
   async hasStudentSubmitted(surveyId: string, token: string): Promise<boolean> {
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase
-        .from('responses')
-        .select('id')
-        .eq('survey_id', surveyId)
-        .eq('anonymous_token', token)
-        .limit(1);
-      if (error) return false;
-      return Boolean(data && data.length > 0);
+      let targetId = surveyId;
+      if (!isUuid(targetId)) {
+        const resolved = await this.getSurveyById(surveyId);
+        if (resolved) targetId = resolved.id;
+      }
+      if (isUuid(targetId)) {
+        const { data, error } = await supabase
+          .from('responses')
+          .select('id')
+          .eq('survey_id', targetId)
+          .eq('anonymous_token', token)
+          .limit(1);
+        if (!error && data && data.length > 0) return true;
+      }
     }
 
     const responses = getStored<ResponseRecord>(STORAGE_KEYS.RESPONSES);
@@ -562,15 +577,22 @@ export const DataService = {
     answers: Array<{ question_id: string; choice_id: string }>
   ): Promise<{ success: boolean; response_id?: string; error?: string }> {
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.rpc('submit_survey_response', {
-        p_survey_id: surveyId,
-        p_anonymous_token: anonymousToken,
-        p_answers: answers
-      });
-      if (error) {
-        return { success: false, error: error.message };
+      let targetId = surveyId;
+      if (!isUuid(targetId)) {
+        const resolved = await this.getSurveyById(surveyId);
+        if (resolved) targetId = resolved.id;
       }
-      return { success: true, response_id: data.response_id };
+      if (isUuid(targetId)) {
+        const { data, error } = await supabase.rpc('submit_survey_response', {
+          p_survey_id: targetId,
+          p_anonymous_token: anonymousToken,
+          p_answers: answers
+        });
+        if (error) {
+          return { success: false, error: error.message };
+        }
+        return { success: true, response_id: data.response_id };
+      }
     }
 
     // Mock validation

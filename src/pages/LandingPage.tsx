@@ -69,7 +69,7 @@ export const LandingPage: React.FC = () => {
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition"
             >
               <Smartphone className="w-4 h-4" />
-              Join Active Survey Demo
+              Join Active Survey ({activeSurvey.title})
             </Link>
           )}
         </div>
