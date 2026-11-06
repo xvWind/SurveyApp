@@ -166,12 +166,22 @@ export const DataService = {
   // 1. List all surveys
   async listSurveys(): Promise<Survey[]> {
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase
-        .from('surveys')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
+      try {
+        const { data, error } = await supabase
+          .from('surveys')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (!error && data) {
+          const localSurveys = getStored<Survey>(STORAGE_KEYS.SURVEYS);
+          const existingIds = new Set(data.map((s) => s.id));
+          const uniqueLocal = localSurveys.filter((s) => !existingIds.has(s.id));
+          return [...data, ...uniqueLocal].sort(
+            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+        }
+      } catch (err) {
+        console.warn('Supabase listSurveys error, using fallback:', err);
+      }
     }
     return getStored<Survey>(STORAGE_KEYS.SURVEYS).sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -275,61 +285,65 @@ export const DataService = {
     }>
   ): Promise<SurveyWithQuestions> {
     if (isSupabaseConfigured && supabase) {
-      let surveyId = surveyData.id;
-      if (!surveyId) {
-        const { data, error } = await supabase
-          .from('surveys')
-          .insert({
-            title: surveyData.title,
-            description: surveyData.description,
-            status: 'draft'
-          })
-          .select()
-          .single();
-        if (error) throw error;
-        surveyId = data.id;
-      } else {
-        const { error } = await supabase
-          .from('surveys')
-          .update({
-            title: surveyData.title,
-            description: surveyData.description,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', surveyId);
-        if (error) throw error;
-      }
-
-      // Delete existing questions & recreate for clean ordering
-      await supabase.from('questions').delete().eq('survey_id', surveyId);
-
-      for (let i = 0; i < questions.length; i++) {
-        const q = questions[i];
-        const { data: qData, error: qError } = await supabase
-          .from('questions')
-          .insert({
-            survey_id: surveyId,
-            question_text: q.question_text,
-            question_type: q.question_type,
-            position: i + 1
-          })
-          .select()
-          .single();
-        if (qError) throw qError;
-
-        if (q.choices && q.choices.length > 0) {
-          const choicesToInsert = q.choices.map((c, cIdx) => ({
-            question_id: qData.id,
-            choice_text: c.choice_text,
-            position: cIdx + 1
-          }));
-          const { error: cError } = await supabase.from('choices').insert(choicesToInsert);
-          if (cError) throw cError;
+      try {
+        let surveyId = surveyData.id;
+        if (!surveyId) {
+          const { data, error } = await supabase
+            .from('surveys')
+            .insert({
+              title: surveyData.title,
+              description: surveyData.description,
+              status: 'draft'
+            })
+            .select()
+            .single();
+          if (error) throw error;
+          surveyId = data.id;
+        } else {
+          const { error } = await supabase
+            .from('surveys')
+            .update({
+              title: surveyData.title,
+              description: surveyData.description,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', surveyId);
+          if (error) throw error;
         }
-      }
 
-      const saved = await this.getSurveyById(surveyId!);
-      return saved!;
+        // Delete existing questions & recreate for clean ordering
+        await supabase.from('questions').delete().eq('survey_id', surveyId);
+
+        for (let i = 0; i < questions.length; i++) {
+          const q = questions[i];
+          const { data: qData, error: qError } = await supabase
+            .from('questions')
+            .insert({
+              survey_id: surveyId,
+              question_text: q.question_text,
+              question_type: q.question_type,
+              position: i + 1
+            })
+            .select()
+            .single();
+          if (qError) throw qError;
+
+          if (q.choices && q.choices.length > 0) {
+            const choicesToInsert = q.choices.map((c, cIdx) => ({
+              question_id: qData.id,
+              choice_text: c.choice_text,
+              position: cIdx + 1
+            }));
+            const { error: cError } = await supabase.from('choices').insert(choicesToInsert);
+            if (cError) throw cError;
+          }
+        }
+
+        const saved = await this.getSurveyById(surveyId!);
+        if (saved) return saved;
+      } catch (err) {
+        console.warn('Supabase saveSurvey failed, falling back to local storage:', err);
+      }
     }
 
     // LocalStorage mode

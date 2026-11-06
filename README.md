@@ -17,6 +17,18 @@ A lightweight, mobile-first web application designed for instructors to quickly 
 
 ---
 
+## Testing the Instructor Interface (Evaluator Access)
+
+To allow instructors, graders, and course evaluators to test the full instructor workflow on the deployed application **without requiring credentials to be committed to the repository**:
+1. Open the application and go to the **Instructor Login** page (`/login`).
+2. Click **"Continue as Test Instructor"**:
+   - Provides instant 1-click access to the full Instructor Dashboard.
+   - Allows creating new surveys, editing drafts, activating surveys, displaying QR codes, and downloading CSV reports.
+   - Students can join the active survey at `/s/:slug` and submit responses anonymously.
+3. **Register Your Own Account**: Alternatively, click the **"Create Account"** tab on `/login` to register with any email and password.
+
+---
+
 ## Tech Stack
 
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS
@@ -24,7 +36,7 @@ A lightweight, mobile-first web application designed for instructors to quickly 
 - **Charts & QR Codes**: Recharts, `qrcode`
 - **Icons**: Lucide React
 - **Backend & Database**: Supabase (PostgreSQL 15+, Auth, Row-Level Security, RPC Functions)
-- **Hosting**: Cloudflare Pages (Static SPA with `_redirects` routing)
+- **Hosting**: Cloudflare Pages (Static SPA with native 200.html routing)
 
 ---
 
@@ -32,11 +44,9 @@ A lightweight, mobile-first web application designed for instructors to quickly 
 
 ```text
 SurveyApp/
-├── public/
-│   └── _redirects              # Cloudflare Pages SPA rewrite rule
 ├── src/
 │   ├── components/             # Reusable UI (Navbar, ProtectedRoute)
-│   ├── context/                # Authentication context (Supabase + Local Demo)
+│   ├── context/                # Authentication context (Supabase + Test Instructor)
 │   ├── lib/                    # Supabase client & DataService layer
 │   ├── pages/                  # Landing, Login, Dashboard, Editor, Present, Student, Results
 │   ├── types/                  # TypeScript interfaces and database models
